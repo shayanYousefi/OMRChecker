@@ -10,3 +10,7 @@ LICENSE
 .vscode
 venv
 samples/
+
+inputs/*
+outputs/*
+reference/*
