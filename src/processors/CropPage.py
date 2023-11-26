@@ -52,13 +52,16 @@ class CropPage(ImagePreprocessor):
         self.morph_kernel = tuple(
             int(x) for x in cropping_ops.get("morphKernel", [10, 10])
         )
+        self.failOnError = cropping_ops.get('failOnError',True)
 
     def apply_filter(self, image, file_path):
-        image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
+        preprocessed_image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
 
         # Resize should be done with another preprocessor is needed
-        sheet = self.find_page(image, file_path)
+        sheet = self.find_page(preprocessed_image, file_path)
         if len(sheet) == 0:
+            if not self.failOnError:
+                return image
             logger.error(
                 f"\tError: Paper boundary not found for: '{file_path}'\nHave you accidentally included CropPage preprocessor?"
             )
@@ -67,10 +70,10 @@ class CropPage(ImagePreprocessor):
         logger.info(f"Found page corners: \t {sheet.tolist()}")
 
         # Warp layer 1
-        image = ImageUtils.four_point_transform(image, sheet)
+        preprocessed_image = ImageUtils.four_point_transform(preprocessed_image, sheet)
 
         # Return preprocessed image
-        return image
+        return preprocessed_image
 
     def find_page(self, image, file_path):
         config = self.tuning_config
