@@ -1,12 +1,17 @@
 from dataclasses import dataclass
 
 import cv2
-from screeninfo import get_monitors
+import os
+from screeninfo import get_monitors, Monitor
 
 from src.logger import logger
 from src.utils.image import ImageUtils
 
-monitor_window = get_monitors()[0]
+if os.getenv("CONTAINER_MODE"):
+    monitor_window = Monitor(x=3840, y=0, width=3840, height=2160,
+                             width_mm=1420, height_mm=800, name='Fake', is_primary=False)
+else:
+    monitor_window = get_monitors()[0]
 
 
 @dataclass
@@ -25,6 +30,8 @@ class InteractionUtils:
 
     @staticmethod
     def show(name, origin, pause=1, resize=False, reset_pos=None, config=None):
+        if os.getenv("CONTAINER_MODE"):
+            return
         image_metrics = InteractionUtils.image_metrics
         if origin is None:
             logger.info(f"'{name}' - NoneType image to show!")
@@ -33,8 +40,10 @@ class InteractionUtils:
             return
         if resize:
             if not config:
-                raise Exception("config not provided for resizing the image to show")
-            img = ImageUtils.resize_util(origin, config.dimensions.display_width)
+                raise Exception(
+                    "config not provided for resizing the image to show")
+            img = ImageUtils.resize_util(
+                origin, config.dimensions.display_width)
         else:
             img = origin
 
