@@ -3,11 +3,11 @@
 # Except .github
 !.github/
 
-# Everything in inputs/ and outputs/
+
 inputs/*
 outputs/*
 reference/*
-log/*
+logs/*
 
 # Misc
 **/.DS_Store

@@ -14,5 +14,6 @@ samples/
 inputs/*
 outputs/*
 reference/*
+logs/*
 
 .env
