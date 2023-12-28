@@ -45,4 +45,4 @@ ENV LOG_LEVEL "info"
 COPY ./ /var/app/
 
 ## Run the default command
-CMD ["python", "/var/app/main.py"]
+ENTRYPOINT ["python", "/var/app/server.py"]
