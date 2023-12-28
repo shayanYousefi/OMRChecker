@@ -21,13 +21,17 @@ class CropOnMarkers(ImagePreprocessor):
         self.marker_path = os.path.join(
             self.relative_dir, marker_ops.get("relativePath", "omr_marker.jpg")
         )
-        self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
-        self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
+        self.min_matching_threshold = marker_ops.get(
+            "min_matching_threshold", 0.3)
+        self.max_matching_variation = marker_ops.get(
+            "max_matching_variation", 0.41)
         self.marker_rescale_range = tuple(
             int(r) for r in marker_ops.get("marker_rescale_range", (35, 100))
         )
-        self.marker_rescale_steps = int(marker_ops.get("marker_rescale_steps", 10))
-        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", True)
+        self.marker_rescale_steps = int(
+            marker_ops.get("marker_rescale_steps", 10))
+        self.apply_erode_subtract = marker_ops.get(
+            "apply_erode_subtract", True)
         self.marker = self.load_marker(marker_ops, config)
 
     def __str__(self):
@@ -55,8 +59,8 @@ class CropOnMarkers(ImagePreprocessor):
         quads[3] = image_eroded_sub[midh:h1, midw:w1]
 
         # Draw Quadlines
-        image_eroded_sub[:, midw : midw + 2] = 255
-        image_eroded_sub[midh : midh + 2, :] = 255
+        image_eroded_sub[:, midw: midw + 2] = 255
+        image_eroded_sub[midh: midh + 2, :] = 255
 
         best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
@@ -72,9 +76,11 @@ class CropOnMarkers(ImagePreprocessor):
         sum_t, max_t = 0, 0
         quarter_match_log = "Matching Marker:  "
         for k in range(0, 4):
-            res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(
+                quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()
-            quarter_match_log += f"Quarter{str(k + 1)}: {str(round(max_t, 3))}\t"
+            quarter_match_log += f"Quarter\
+                {str(k + 1)}: {str(round(max_t, 3))}\t"
             if (
                 max_t < self.min_matching_threshold
                 or abs(all_max_t - max_t) >= self.max_matching_variation
@@ -126,8 +132,8 @@ class CropOnMarkers(ImagePreprocessor):
             centres.append([pt[0] + w / 2, pt[1] + _h / 2])
             sum_t += max_t
 
-        logger.info(quarter_match_log)
-        logger.info(f"Optimal Scale: {best_scale}")
+        logger.debug(quarter_match_log)
+        logger.debug(f"Optimal Scale: {best_scale}")
         # analysis data
         self.threshold_circles.append(sum_t / 4)
 

@@ -17,7 +17,7 @@ from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
 
 
 def validate_evaluation_json(json_data, evaluation_path):
-    logger.info(f"Loading evaluation.json: {evaluation_path}")
+    logger.debug(f"Loading evaluation.json: {evaluation_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["evaluation"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -39,14 +39,14 @@ def validate_evaluation_json(json_data, evaluation_path):
                 )
             else:
                 table.add_row(key, msg)
-        console.print(table, justify="center")
+        # console.print(table, justify="center")
         raise Exception(
             f"Provided Evaluation JSON is Invalid: '{evaluation_path}'"
         ) from None
 
 
 def validate_template_json(json_data, template_path):
-    logger.info(f"Loading template.json: {template_path}")
+    logger.debug(f"Loading template.json: {template_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["template"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -74,14 +74,14 @@ def validate_template_json(json_data, template_path):
                 )
             else:
                 table.add_row(key, msg)
-        console.print(table, justify="center")
+        # console.print(table, justify="center")
         raise Exception(
             f"Provided Template JSON is Invalid: '{template_path}'"
         ) from None
 
 
 def validate_config_json(json_data, config_path):
-    logger.info(f"Loading config.json: {config_path}")
+    logger.debug(f"Loading config.json: {config_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["config"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -103,7 +103,7 @@ def validate_config_json(json_data, config_path):
                 )
             else:
                 table.add_row(key, msg)
-        console.print(table, justify="center")
+        # console.print(table, justify="center")
         raise Exception(f"Provided config JSON is Invalid: '{config_path}'") from None
 
 

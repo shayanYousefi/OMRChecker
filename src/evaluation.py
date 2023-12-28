@@ -53,7 +53,8 @@ class AnswerMatcher:
                 return "answer-weights"
             else:
                 logger.critical(
-                    f"Unable to determine answer type for answer item: {answer_item}"
+                    f"Unable to determine answer type for answer item: \
+                        {answer_item}"
                 )
                 raise Exception("Unable to determine answer type")
 
@@ -74,8 +75,10 @@ class AnswerMatcher:
             for allowed_answer in parsed_answer:
                 self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
         elif answer_type == "multiple-correct-weighted":
-            custom_marking = list(map(parse_float_or_fraction, parsed_answer[1]))
-            verdict_types_length = min(len(MARKING_VERDICT_TYPES), len(custom_marking))
+            custom_marking = list(
+                map(parse_float_or_fraction, parsed_answer[1]))
+            verdict_types_length = min(
+                len(MARKING_VERDICT_TYPES), len(custom_marking))
             # override the given marking
             for i in range(verdict_types_length):
                 verdict_type = MARKING_VERDICT_TYPES[i]
@@ -151,7 +154,8 @@ class SectionMarkingScheme:
             self.questions = None
             self.marking = self.parse_scheme_marking(section_scheme)
         else:
-            self.questions = parse_fields(section_key, section_scheme["questions"])
+            self.questions = parse_fields(
+                section_key, section_scheme["questions"])
             self.marking = self.parse_scheme_marking(section_scheme["marking"])
 
     def parse_scheme_marking(self, marking):
@@ -164,7 +168,8 @@ class SectionMarkingScheme:
                 and not self.section_key.startswith(BONUS_SECTION_PREFIX)
             ):
                 logger.warning(
-                    f"Found positive marks({round(verdict_marking, 2)}) for incorrect answer in the schema '{self.section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
+                    f"Found positive marks({round(verdict_marking, 2)}) for incorrect answer in the schema '\
+                        {self.section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
                 )
             parsed_marking[verdict_type] = verdict_marking
 
@@ -187,7 +192,8 @@ class EvaluationConfig:
         options, marking_scheme, source_type = map(
             evaluation_json.get, ["options", "marking_scheme", "source_type"]
         )
-        self.should_explain_scoring = options.get("should_explain_scoring", False)
+        self.should_explain_scoring = options.get(
+            "should_explain_scoring", False)
         self.has_non_default_section = False
         self.exclude_files = []
 
@@ -196,7 +202,8 @@ class EvaluationConfig:
         if source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
             if not os.path.exists(csv_path):
-                logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")
+                logger.warning(
+                    f"Answer key csv does not exist at: '{csv_path}'.")
 
             answer_key_image_path = options.get("answer_key_image_path", None)
             if os.path.exists(csv_path):
@@ -205,7 +212,8 @@ class EvaluationConfig:
                     csv_path,
                     header=None,
                     names=["question", "answer"],
-                    converters={"question": str, "answer": self.parse_answer_column},
+                    converters={"question": str,
+                                "answer": self.parse_answer_column},
                 )
 
                 self.questions_in_order = answer_key["question"].to_list()
@@ -215,12 +223,14 @@ class EvaluationConfig:
             else:
                 image_path = str(curr_dir.joinpath(answer_key_image_path))
                 if not os.path.exists(image_path):
-                    raise Exception(f"Answer key image not found at '{image_path}'")
+                    raise Exception(
+                        f"Answer key image not found at '{image_path}'")
 
                 # self.exclude_files.append(image_path)
 
                 logger.debug(
-                    f"Attempting to generate answer key from image: '{image_path}'"
+                    f"Attempting to generate answer key from image: '\
+                        {image_path}'"
                 )
                 # TODO: use a common function for below changes?
                 in_omr = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -242,7 +252,8 @@ class EvaluationConfig:
                     name=image_path,
                     save_dir=None,
                 )
-                omr_response = get_concatenated_response(response_dict, template)
+                omr_response = get_concatenated_response(
+                    response_dict, template)
 
                 empty_val = template.global_empty_val
                 empty_answer_regex = (
@@ -260,10 +271,12 @@ class EvaluationConfig:
                     ]
                     if len(empty_answered_questions) > 0:
                         logger.error(
-                            f"Found empty answers for questions: {empty_answered_questions}, empty value used: '{empty_val}'"
+                            f"Found empty answers for questions: \
+                                {empty_answered_questions}, empty value used: '{empty_val}'"
                         )
                         raise Exception(
-                            f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
+                            f"Found empty answers in file '\
+                                {image_path}'. Please check your template again in the --setLayout mode."
                         )
                 else:
                     logger.warning(
@@ -316,7 +329,8 @@ class EvaluationConfig:
 
         omr_response_questions = set(omr_response.keys())
         all_questions = set(self.questions_in_order)
-        missing_questions = sorted(all_questions.difference(omr_response_questions))
+        missing_questions = sorted(
+            all_questions.difference(omr_response_questions))
         if len(missing_questions) > 0:
             logger.critical(f"Missing OMR response for: {missing_questions}")
             raise Exception(
@@ -331,12 +345,14 @@ class EvaluationConfig:
         )
         if len(missing_prefixed_questions) > 0:
             logger.warning(
-                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
+                f"No answer given for potential questions in OMR response: \
+                    {missing_prefixed_questions}"
             )
 
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
-        question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
+        question_verdict, delta = answer_matcher.get_verdict_marking(
+            marked_answer)
         self.conditionally_add_explanation(
             answer_matcher,
             delta,
@@ -349,7 +365,8 @@ class EvaluationConfig:
 
     def conditionally_print_explanation(self):
         if self.should_explain_scoring:
-            console.print(self.explanation_table, justify="center")
+            return
+            # console.print(self.explanation_table, justify="center")
 
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
@@ -400,10 +417,12 @@ class EvaluationConfig:
         )
         if len_questions_in_order != len_answers_in_order:
             logger.critical(
-                f"questions_in_order({len_questions_in_order}): {questions_in_order}\nanswers_in_order({len_answers_in_order}): {answers_in_order}"
+                f"questions_in_order({len_questions_in_order}): \
+                    {questions_in_order}\nanswers_in_order({len_answers_in_order}): {answers_in_order}"
             )
             raise Exception(
-                f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
+                f"Unequal lengths for questions_in_order and answers_in_order (\
+                    {len_questions_in_order} != {len_answers_in_order})"
             )
 
     def validate_marking_scheme(self):
@@ -415,7 +434,8 @@ class EvaluationConfig:
             current_set = set(section_scheme.questions)
             if not section_questions.isdisjoint(current_set):
                 raise Exception(
-                    f"Section '{section_key}' has overlapping question(s) with other sections"
+                    f"Section '\
+                        {section_key}' has overlapping question(s) with other sections"
                 )
             section_questions = section_questions.union(current_set)
 
@@ -430,7 +450,8 @@ class EvaluationConfig:
     def parse_answers_and_map_questions(self, answers_in_order):
         question_to_answer_matcher = {}
         for question, answer_item in zip(self.questions_in_order, answers_in_order):
-            section_marking_scheme = self.get_marking_scheme_for_question(question)
+            section_marking_scheme = self.get_marking_scheme_for_question(
+                question)
             question_to_answer_matcher[question] = AnswerMatcher(
                 answer_item, section_marking_scheme
             )

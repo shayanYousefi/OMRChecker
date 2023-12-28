@@ -13,7 +13,6 @@ from time import time
 
 import cv2
 import pandas as pd
-from rich.table import Table
 
 from src import constants
 from src.defaults import CONFIG_DEFAULTS
@@ -45,29 +44,7 @@ def print_config_summary(
     evaluation_config,
     args,
 ):
-    logger.info("")
-    table = Table(title="Current Configurations", show_header=False, show_lines=False)
-    table.add_column("Key", style="cyan", no_wrap=True)
-    table.add_column("Value", style="magenta")
-    table.add_row("Directory Path", f"{curr_dir}")
-    table.add_row("Count of Images", f"{len(omr_files)}")
-    table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
-    table.add_row(
-        "Markers Detection",
-        "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
-    )
-    table.add_row("Auto Alignment", f"{tuning_config.alignment_params.auto_align}")
-    table.add_row("Detected Template Path", f"{template}")
-    if local_config_path:
-        table.add_row("Detected Local Config", f"{local_config_path}")
-    if evaluation_config:
-        table.add_row("Detected Evaluation Config", f"{evaluation_config}")
-
-    table.add_row(
-        "Detected pre-processors",
-        f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
-    )
-    console.print(table, justify="center")
+    return
 
 
 def process_dir(
@@ -111,7 +88,8 @@ def process_dir(
     if not args["setLayout"] and os.path.exists(local_evaluation_path):
         if not local_template_exists:
             logger.warning(
-                f"Found an evaluation file without a parent template file: {local_evaluation_path}"
+                f"Found an evaluation file without a parent template file: \
+                    {local_evaluation_path}"
             )
         evaluation_config = EvaluationConfig(
             curr_dir,
@@ -212,9 +190,9 @@ def process_files(
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
 
-        logger.info("")
-        logger.info(
-            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
+        logger.debug(
+            f"({files_counter}) Opening image: \t'\
+                {file_path}'\tResolution: {in_omr.shape}"
         )
 
         template.image_instance_ops.reset_all_save_img()
@@ -227,7 +205,8 @@ def process_files(
 
         if in_omr is None:
             # Error OMR case
-            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
+            new_file_path = outputs_namespace.paths.errors_dir.joinpath(
+                file_name)
             outputs_namespace.OUTPUT_SET.append(
                 [file_name] + outputs_namespace.empty_resp
             )
@@ -269,22 +248,25 @@ def process_files(
             evaluation_config is None
             or not evaluation_config.get_should_explain_scoring()
         ):
-            logger.info(f"Read Response: \n{omr_response}")
+            logger.debug(f"Read Response: \n{omr_response}")
 
         score = 0
         if evaluation_config is not None:
-            score = evaluate_concatenated_response(omr_response, evaluation_config)
+            score = evaluate_concatenated_response(
+                omr_response, evaluation_config)
             logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
+                f"(/{files_counter}) Graded with score: \
+                    {round(score, 2)}\t for file: '{file_id}'"
             )
         else:
-            logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+            logger.debug(f"(/{files_counter}) Processed file: '{file_id}'")
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
                 ImageUtils.resize_util_h(
-                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
+                    final_marked, int(
+                        tuning_config.dimensions.display_height * 1.3)
                 ),
                 1,
                 1,
@@ -301,7 +283,8 @@ def process_files(
             STATS.files_not_moved += 1
             new_file_path = save_dir.joinpath(file_id)
             # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
+            results_line = [file_name, file_path,
+                            new_file_path, score] + resp_array
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["Results"],
@@ -312,12 +295,15 @@ def process_files(
             )
         else:
             # multi_marked file
-            logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
+            logger.debug(
+                f"[{files_counter}] Found multi-marked file: '{file_id}'")
+            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(
+                file_name)
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
             ):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
+                mm_line = [file_name, file_path,
+                           new_file_path, "NA"] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     outputs_namespace.files_obj["MultiMarked"],
                     mode="a",
@@ -346,18 +332,22 @@ def print_stats(start_time, files_counter, tuning_config):
     log(f"{'Total file(s) not moved':<27}: {STATS.files_not_moved}")
     log("--------------------------------")
     log(
-        f"{'Total file(s) processed':<27}: {files_counter} ({'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
+        f"{'Total file(s) processed':<27}: {files_counter} (\
+            {'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
     )
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
+            f"\nFinished Checking {files_counter} file(s) in \
+                {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate':<27}:\t ~ \
+                {round(time_checking/files_counter, 2)} seconds/OMR"
         )
         log(
-            f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
+            f"{'OMR Processing Speed':<27}:\t ~ \
+                {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
         )
     else:
         log(f"\n{'Total script time':<27}: {time_checking} seconds")
