@@ -11,7 +11,7 @@ FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) ''-35s %(messa
 logging.basicConfig(
     level=logging.INFO,
     format=FORMAT,
-    datefmt="[%X]",
+    datefmt="[%Y-%m-%d,%H:%M:%S]",
     handlers=[RotatingFileHandler(
         "logs/OMRcheckFile.log", maxBytes=2*1024*1024*1024, backupCount=7),
         logging.StreamHandler()],
