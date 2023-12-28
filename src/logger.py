@@ -46,6 +46,9 @@ class Logger:
     def critical(self, *msg: object, sep=" ", end="\n") -> None:
         return self.logutil("critical", *msg, sep=sep)
 
+    def exception(self, *msg: object, sep=" ", end="\n") -> None:
+        return self.logutil("exception", *msg, sep=sep)
+
     def stringify(func):
         def inner(self, method_type: str, *msg: object, sep=" "):
             nmsg = []
