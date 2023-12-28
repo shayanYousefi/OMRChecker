@@ -3,6 +3,8 @@ import json
 import os
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime
+from shutil import rmtree
+from pathlib import Path
 
 import pandas as pd
 
@@ -92,3 +94,12 @@ def setup_outputs_for_template(paths, template):
             ns.files_obj[file_key] = open(file_name, "a")
 
     return ns
+
+
+def empty_folder(folder_path):
+    folder = Path(folder_path)
+    for item in folder.iterdir():
+        if item.is_dir():
+            rmtree(item)
+        else:
+            item.unlink()
