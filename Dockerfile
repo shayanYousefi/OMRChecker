@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /var/app
 
-ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND noninteractive
 
 RUN apt update -y && \
     apt install -y build-essential cmake unzip pkg-config \
@@ -10,11 +10,12 @@ RUN apt update -y && \
     libavcodec-dev libavformat-dev libswscale-dev libv4l-dev \
     libatlas-base-dev gfortran
 
-
-COPY ./ /var/app/
-
 RUN pip3 install --user opencv-python-headless opencv-contrib-python-headless
+
+
+COPY ./requirements.txt /var/app/requirements.txt
 RUN pip3 install -r requirements.txt
+
 
 RUN apt clean
 RUN apt -y autoremove
@@ -41,6 +42,7 @@ ENV OUTPUT_FOLDER "/var/app/outputs/scans"
 
 ENV LOG_LEVEL "info"
 
+COPY ./ /var/app/
 
 ## Run the default command
 CMD ["python", "/var/app/main.py"]
