@@ -7,9 +7,12 @@
 inputs/*
 outputs/*
 reference/*
+log/*
 
 # Misc
 **/.DS_Store
 **/__pycache__
 venv/
 OMRChecker.wiki/
+
+.env
