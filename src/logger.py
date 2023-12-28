@@ -1,17 +1,19 @@
 import logging
 from typing import Union
+from logging.handlers import RotatingFileHandler
 
 from rich.console import Console
-from rich.logging import RichHandler
 
-FORMAT = "%(message)s"
+FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) ''-35s %(message)s')
 
 # TODO: set logging level from config.json dynamically
 logging.basicConfig(
     level=logging.INFO,
-    format="%(message)s",
+    format=FORMAT,
     datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True)],
+    handlers=[RotatingFileHandler(
+        "logs/OMRcheckFile.log", maxBytes=2*1024*1024*1024, backupCount=7),
+        logging.StreamHandler()],
 )
 
 
