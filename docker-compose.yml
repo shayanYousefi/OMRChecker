@@ -1,0 +1,9 @@
+services:
+  omrchecker:
+    image: "omrchecker:final"
+    env_file:
+      - .env
+    volumes:
+      - './inputs:/var/app/inputs'
+      - './outputs:/var/app/outputs'
+      - './logs:/var/app/logs'
