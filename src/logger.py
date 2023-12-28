@@ -1,6 +1,7 @@
 import logging
 from typing import Union
 from logging.handlers import RotatingFileHandler
+from os import getenv
 
 from rich.console import Console
 
@@ -66,5 +67,6 @@ class Logger:
         return func(sep.join(msg), stacklevel=4)
 
 
-logger = Logger(__name__)
+log_level = getattr(logging, getenv("LOG_LEVEL", "INFO").upper())
+logger = Logger(__name__, log_level)
 console = Console()
