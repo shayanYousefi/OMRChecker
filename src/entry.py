@@ -190,7 +190,7 @@ def process_files(
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
 
-        logger.debug(
+        logger.info(
             f"({files_counter}) Opening image: \t'\
                 {file_path}'\tResolution: {in_omr.shape}"
         )
