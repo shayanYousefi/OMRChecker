@@ -31,6 +31,7 @@ ENV RABBIT_EXCHANGE "3a"
 ENV RABBIT_AZMOONS_QUEUE "azmoons_correction"
 ENV RABBIT_AZMOONS_ROUTING_KEY "correct-paper-sheets"
 
+ENV S3_CDN "https://public.com"
 ENV S3_ENDPOINT "https://s3.com"
 ENV S3_ACCESS_KEY "key"
 ENV S3_SECRET_KEY "secret"
