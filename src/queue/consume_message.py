@@ -63,8 +63,9 @@ def upload_image_results_to_s3(file_list, folder_name, s3_client):
     for file in file_list:
         destination = f"{getenv('S3_PREFIX')}/{folder_name}/{file.name}"
         s3_client.upload_file(file.resolve(), getenv("S3_BUCKET"), destination)
+        cdn_base = getenv("S3_CDN") if getenv("S3_CDN") else getenv("S3_ENDPOINT")
         full_url = "{}/{}/{}".format(
-            getenv("S3_ENDPOINT"), getenv("S3_BUCKET"), destination)
+            cdn_base, getenv("S3_BUCKET"), destination)
         destination_list[file.name] = full_url
     return destination_list
 
