@@ -213,7 +213,7 @@ class QueueConsumer(object):
         logger.debug('Declaring queue %s', queue_name)
         cb = functools.partial(self.on_queue_declareok, userdata=queue_name)
         self._channel.queue_declare(
-            queue=queue_name, callback=cb, durable=True)
+            queue=queue_name, callback=cb, durable=True, arguments={"x-consumer-timeout": 0})
 
     def on_queue_declareok(self, _unused_frame, userdata):
         """Method invoked by pika when the Queue.Declare RPC call made in
