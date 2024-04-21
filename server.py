@@ -4,7 +4,6 @@ from pathlib import Path
 from os import getenv
 from src.queue.client import amqp_connect
 from dotenv import load_dotenv
-import boto3
 
 
 def create_inputs_folder():
