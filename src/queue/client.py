@@ -4,8 +4,7 @@ import pika
 from ..logger import logger
 import os
 from src.queue.consume_message import process_message
-import json
-import traceback
+from concurrent.futures import ProcessPoolExecutor
 
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
@@ -29,7 +28,7 @@ class QueueConsumer(object):
     QUEUE = os.getenv("RABBIT_AZMOONS_QUEUE")
     ROUTING_KEY = os.getenv("RABBIT_AZMOONS_ROUTING_KEY")
 
-    def __init__(self, amqp_url, s3_client):
+    def __init__(self, amqp_url):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
 
@@ -47,11 +46,11 @@ class QueueConsumer(object):
         self._closing = False
         self._consumer_tag = None
         self._url = amqp_url
-        self._s3_client = s3_client
         self._consuming = False
         # In production, experiment with higher prefetch values
         # for higher consumer throughput
         self._prefetch_count = 1
+        self._process_pool = ProcessPoolExecutor()
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -307,6 +306,22 @@ class QueueConsumer(object):
             self._channel.close()
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
+        def handler(future):
+            if future.exception():
+                logger.exception("An error happened")
+                self.requeue_message(
+                    properties, body, basic_deliver.delivery_tag)
+                raise future.exception()
+            elif future.cancelled():
+                logger.exception(
+                    Exception(f"Delivery {basic_deliver.delivery_tag} Cancelled"))
+                self.requeue_message(
+                    properties, body, basic_deliver.delivery_tag)
+                return
+            else:
+                logger.info(f"Delivery {basic_deliver.delivery_tag} Completed")
+                self.acknowledge_message(
+                    basic_deliver.delivery_tag)
         """Invoked by pika when a message is delivered from RabbitMQ. The
         channel is passed for your convenience. The basic_deliver object that
         is passed in carries the exchange, routing key, delivery tag and
@@ -316,20 +331,17 @@ class QueueConsumer(object):
 
         :param pika.channel.Channel _unused_channel: The channel object
         :param pika.Spec.Basic.Deliver: basic_deliver method
-        :param pika.Spec.BasicProperties: properties
+        :param pika.Spec.BasicProperties: propertie
         :param bytes body: The message body
 
         """
         logger.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
-        # url = body.decode('utf-8')
-        # process_message(url, self._s3_client)
         try:
-            url = body.decode('utf-8')
-            process_message(url, self._s3_client)
+            future = self._process_pool.submit(process_message, body)
+            future.add_done_callback(handler)
         except Exception as err:
             logger.exception(err)
-        self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
@@ -427,11 +439,10 @@ class ReconnectingQueueConsumer(object):
 
     """
 
-    def __init__(self, amqp_url, s3_client):
+    def __init__(self, amqp_url):
         self._reconnect_delay = 5
         self._amqp_url = amqp_url
-        self._s3_client = s3_client
-        self._consumer = QueueConsumer(self._amqp_url, self._s3_client)
+        self._consumer = QueueConsumer(self._amqp_url)
 
     def run(self):
         while True:
@@ -448,7 +459,7 @@ class ReconnectingQueueConsumer(object):
             reconnect_delay = self._get_reconnect_delay()
             logger.info('Reconnecting after %d seconds', reconnect_delay)
             time.sleep(reconnect_delay)
-            self._consumer = QueueConsumer(self._amqp_url, self._s3_client)
+            self._consumer = QueueConsumer(self._amqp_url)
 
     def _get_reconnect_delay(self):
         if self._consumer.was_consuming:
@@ -460,8 +471,8 @@ class ReconnectingQueueConsumer(object):
         return self._reconnect_delay
 
 
-def amqp_connect(url, s3_client):
-    consumer = ReconnectingQueueConsumer(url, s3_client)
+def amqp_connect(url):
+    consumer = ReconnectingQueueConsumer(url)
     consumer.run()
 
 

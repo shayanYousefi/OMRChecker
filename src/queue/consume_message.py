@@ -3,6 +3,7 @@ from zipfile import ZipFile
 from os import getenv, sep
 import pandas
 import requests
+import boto3
 from shutil import rmtree
 
 import main
@@ -85,7 +86,8 @@ def upload_image_results_to_s3(file_list, folder_name, s3_client):
     for file in file_list:
         destination = f"{getenv('S3_PREFIX')}/{folder_name}/{file.name}"
         s3_client.upload_file(file.resolve(), getenv("S3_BUCKET"), destination)
-        cdn_base = getenv("S3_CDN") if getenv("S3_CDN") else getenv("S3_ENDPOINT")
+        cdn_base = getenv("S3_CDN") if getenv(
+            "S3_CDN") else getenv("S3_ENDPOINT")
         full_url = "{}/{}/{}".format(
             cdn_base, getenv("S3_BUCKET"), destination)
         destination_list[file.name] = full_url
@@ -109,8 +111,11 @@ def add_upload_url_to_csv(file_path, image_url_list, new_file_location):
     return result_manipulation.save_new_file(csv_file, new_file_location)
 
 
-def process_message(url, s3_client):
-
+def process_message(body):
+    s3_client = boto3.client('s3', endpoint_url=getenv("S3_ENDPOINT"),
+                             aws_secret_access_key=getenv("S3_SECRET_KEY"),
+                             aws_access_key_id=getenv("S3_ACCESS_KEY"))
+    url = body.decode('utf-8')
     zip_file_name = url.split('/')[-1]
     file_path = Path(f"{getenv('INPUT_FOLDER')}/{zip_file_name}")
 
