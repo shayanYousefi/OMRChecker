@@ -341,6 +341,21 @@ class QueueConsumer(object):
         logger.info('Acknowledging message %s', delivery_tag)
         self._channel.basic_ack(delivery_tag)
 
+    def nack_message(self, delivery_tag):
+        self._channel.basic_reject(delivery_tag)
+
+    def requeue_message(self, properties, body, delivery_tag):
+        logger.info('Requeuing message %s', delivery_tag)
+        if "retry_count" in properties.headers:
+            retry = int(properties.headers["retry_count"])
+        else:
+            retry = 0
+        retry = retry + 1
+        prop = pika.BasicProperties(headers={"retry_count": retry})
+        self._channel.basic_publish(
+            exchange=self.EXCHANGE, routing_key=self.ROUTING_KEY, body=body, properties=prop)
+        self.acknowledge_message(delivery_tag)
+
     def stop_consuming(self):
         """Tell RabbitMQ that you would like to stop consuming by sending the
         Basic.Cancel RPC command.
