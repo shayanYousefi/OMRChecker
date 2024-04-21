@@ -1,8 +1,9 @@
 from pathlib import Path
 from zipfile import ZipFile
-from os import getenv
+from os import getenv, sep
 import pandas
 import requests
+from shutil import rmtree
 
 import main
 import src.result_manipulation as result_manipulation
@@ -32,6 +33,27 @@ def get_file_count(dir):
     files = Path(dir).glob("*")
     files = list(files)
     return len(files)
+
+
+def flatten_directory(root):
+    root = Path(root)
+    files = []
+    folders = []
+    paths = list(root.glob("**/*"))
+    for path in paths:
+        if path.is_dir():
+            folders.append(path)
+            continue
+        elif path.is_file():
+            route = str(path.resolve())
+            route = route.replace(f"{root.resolve()}{sep}", '')
+            route = route.replace(sep, '_')
+            files.append((path.resolve(), route))
+    for file_path, new_name in files:
+        file_path.replace(root.joinpath(new_name))
+    for folder in folders:
+        if folder.exists():
+            rmtree(str(folder))
 
 
 def get_result_file_path(output_dir):
@@ -103,6 +125,7 @@ def process_message(url, s3_client):
     logger.debug(f"Unziping {file_path.resolve()}")
     unzip_pics(file_path.resolve(), pics_folder)
     remove_zip_file(file_path.resolve())
+    flatten_directory(pics_folder)
 
     file_count = get_file_count(pics_folder)
     logger.debug(f"Found {file_count} file in compressed file")
